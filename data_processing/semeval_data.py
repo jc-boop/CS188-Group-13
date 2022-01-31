@@ -54,11 +54,11 @@ class SemEvalDataProcessor(DataProcessor):
         with open(f'{data_dir}/{split}.csv') as f:
             reader = csv.DictReader(f)
             for i,row in enumerate(reader):
-                correct_example = SemEvalSingleSentenceExample(guid=i, text=row['Correct Statement'], label=0, \
+                correct_example = SemEvalSingleSentenceExample(guid=i*2, text=row['Correct Statement'], label=0, \
                                                                right_reason1=row['Right Reason1'], right_reason2=row['Right Reason2'], \
                                                                right_reason3=row['Right Reason3'], confusing_reason1=row['Confusing Reason1'], \
                                                                confusing_reason2=row['Confusing Reason2'])
-                incorrect_example = SemEvalSingleSentenceExample(guid=i, text=row['Incorrect Statement'], label=1, \
+                incorrect_example = SemEvalSingleSentenceExample(guid=i*2+1, text=row['Incorrect Statement'], label=1, \
                                                                  right_reason1=row['Right Reason1'], right_reason2=row['Right Reason2'], \
                                                                  right_reason3=row['Right Reason3'], confusing_reason1=row['Confusing Reason1'], \
                                                                  confusing_reason2=row['Confusing Reason2'])
