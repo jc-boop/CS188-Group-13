@@ -50,18 +50,22 @@ class SemEvalDataProcessor(DataProcessor):
         #      examples.append(example_2)
         # For the guid, simply use the row number (0-
         # indexed) for each data instance.
+        data_path = os.path.join(data_dir, split+".csv")
         examples = []
-        with open(f'{data_dir}/{split}.csv') as f:
+        with open(data_path, 'r') as f:
             reader = csv.DictReader(f)
             for i,row in enumerate(reader):
-                correct_example = SemEvalSingleSentenceExample(guid=i*2, text=row['Correct Statement'], label=0, \
-                                                               right_reason1=row['Right Reason1'], right_reason2=row['Right Reason2'], \
-                                                               right_reason3=row['Right Reason3'], confusing_reason1=row['Confusing Reason1'], \
-                                                               confusing_reason2=row['Confusing Reason2'])
-                incorrect_example = SemEvalSingleSentenceExample(guid=i*2+1, text=row['Incorrect Statement'], label=1, \
-                                                                 right_reason1=row['Right Reason1'], right_reason2=row['Right Reason2'], \
-                                                                 right_reason3=row['Right Reason3'], confusing_reason1=row['Confusing Reason1'], \
-                                                                 confusing_reason2=row['Confusing Reason2'])
+                reasons = { key.replace(' ', '_').lower(): val for key, val in row.items() if 'Reason' in key }
+                # Turns "Right Reason1" into "right_reason1"
+                # reasons dict used as kwargs for the examples
+                correct_example = SemEvalSingleSentenceExample(guid=i*2,
+                                                               text=row['Correct Statement'],
+                                                               label=0,
+                                                               **reasons)
+                incorrect_example = SemEvalSingleSentenceExample(guid=i*2+1,
+                                                                 text=row['Incorrect Statement'],
+                                                                 label=1,
+                                                                 **reasons)
                 examples.append(correct_example)
                 examples.append(incorrect_example)
         # End of TODO.
