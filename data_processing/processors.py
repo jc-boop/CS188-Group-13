@@ -23,6 +23,7 @@ from torch.utils.data import DataLoader, SequentialSampler
 
 # Processors.
 from .dummy_data import DummyDataProcessor
+from .semeval_data import SemEvalDataProcessor
 from transformers import (
     AutoTokenizer,
 )
@@ -228,6 +229,7 @@ class Com2SenseDataset(Dataset):
 
 
 if __name__ == "__main__":
+    '''
     class dummy_args(object):
         def __init__(self):
             self.model_type = "bert"
@@ -253,7 +255,32 @@ if __name__ == "__main__":
         for each in batch:
             print(each.size())
         break
-    pass
+    '''
 
     # You can write your own unit-testing utilities here similar to above.
+    class semeval_args(object):
+        def __init__(self):
+            self.model_type = "bert"
+            self.cls_ignore_index = -100
+            self.do_train = True
+            self.max_seq_length = 32
+
+    args = semeval_args()
+
+    tokenizer = AutoTokenizer.from_pretrained("bert-base-cased")
+
+    processor = SemEvalDataProcessor(data_dir="datasets/semeval_2020_task4", args=args)
+    examples = processor.get_test_examples()
+
+    dataset = SemEvalDataset(examples, tokenizer,
+                           max_seq_length=args.max_seq_length,
+                           args=args)
+    sampler = SequentialSampler(dataset)
+    dataloader = DataLoader(dataset, sampler=sampler, batch_size=2)
+    epoch_iterator = tqdm(dataloader, desc="Iteration")
+
+    for step, batch in enumerate(epoch_iterator):
+        for each in batch:
+            print(each.size())
+        break
     pass

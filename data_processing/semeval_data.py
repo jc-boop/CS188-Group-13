@@ -58,11 +58,11 @@ class SemEvalDataProcessor(DataProcessor):
                 reasons = { key.replace(' ', '_').lower(): val for key, val in row.items() if 'Reason' in key }
                 # Turns "Right Reason1" into "right_reason1"
                 # reasons dict used as kwargs for the examples
-                correct_example = SemEvalSingleSentenceExample(guid=i*2,
+                correct_example = SemEvalSingleSentenceExample(guid=i,
                                                                text=row['Correct Statement'],
                                                                label=0,
                                                                **reasons)
-                incorrect_example = SemEvalSingleSentenceExample(guid=i*2+1,
+                incorrect_example = SemEvalSingleSentenceExample(guid=i,
                                                                  text=row['Incorrect Statement'],
                                                                  label=1,
                                                                  **reasons)
