@@ -195,17 +195,11 @@ class Com2SenseDataset(Dataset):
         # the outputs of tokenizer for certain types of
         # models (e.g. RoBERTa), please take special care
         # of it with an if-else statement.
-        # End of TODO.
-        ##################################################
         example = self.examples[idx]
         guid = example.guid
         text = example.text
-        label = example.label
-        domain = example.domain
-        scenario = example.scenario
-        numeracy = example.numeracy
-
-
+        print(idx, example.text)
+       
         batch_encoding = self.tokenizer(
             text,
             add_special_tokens=True,
@@ -221,12 +215,13 @@ class Com2SenseDataset(Dataset):
         else:
             token_type_ids = torch.Tensor(batch_encoding["token_type_ids"]).long()
 
+        # End of TODO.
+        ##################################################
+        
+        label = example.label
         if label is not None:
             labels = torch.Tensor([label]).long()[0]
 
-        domains = torch.Tensor([domain]).long()[0]
-        scenarios = torch.Tensor([scenario]).long()[0]
-        numeracys = torch.Tensor([numeracy]).long()[0]
 
         if not self.args.do_train:
             if label is None:
@@ -237,32 +232,32 @@ class Com2SenseDataset(Dataset):
 
 
 if __name__ == "__main__":
-    class dummy_args(object):
-        def __init__(self):
-            self.model_type = "bert"
-            self.cls_ignore_index = -100
-            self.do_train = True
-            self.max_seq_length = 32
+    # class dummy_args(object):
+    #     def __init__(self):
+    #         self.model_type = "bert"
+    #         self.cls_ignore_index = -100
+    #         self.do_train = True
+    #         self.max_seq_length = 32
 
-    args = dummy_args()
+    # args = dummy_args()
 
-    tokenizer = AutoTokenizer.from_pretrained("bert-base-cased")
+    # tokenizer = AutoTokenizer.from_pretrained("bert-base-cased")
 
-    processor = DummyDataProcessor(data_dir="datasets/dummies", args=args)
-    examples = processor.get_test_examples()
+    # processor = DummyDataProcessor(data_dir="datasets/dummies", args=args)
+    # examples = processor.get_test_examples()
 
-    dataset = DummyDataset(examples, tokenizer,
-                           max_seq_length=args.max_seq_length,
-                           args=args)
-    sampler = SequentialSampler(dataset)
-    dataloader = DataLoader(dataset, sampler=sampler, batch_size=2)
-    epoch_iterator = tqdm(dataloader, desc="Iteration")
+    # dataset = DummyDataset(examples, tokenizer,
+    #                        max_seq_length=args.max_seq_length,
+    #                        args=args)
+    # sampler = SequentialSampler(dataset)
+    # dataloader = DataLoader(dataset, sampler=sampler, batch_size=2)
+    # epoch_iterator = tqdm(dataloader, desc="Iteration")
 
-    for step, batch in enumerate(epoch_iterator):
-        for each in batch:
-            print(each.size())
-        break
-    pass
+    # for step, batch in enumerate(epoch_iterator):
+    #     for each in batch:
+    #         print(each.size())
+    #     break
+    # pass
 
     class com2sense_args(object):
         def __init__(self):

@@ -39,6 +39,28 @@ class Com2SenseDataProcessor(DataProcessor):
         if data_dir is None:
             data_dir = self.data_dir
 
+        ##################################################
+        # TODO: Use json python package to load the data
+        # properly.
+        # We recommend separately storing the two
+        # complementary statements into two individual
+        # `examples` using the provided class
+        # `Coms2SenseSingleSentenceExample` in `utils.py`.
+        # e.g. example_1 = ...
+        #      example_2 = ...
+        #      examples.append(example_1)
+        #      examples.append(example_2)
+        # Make sure to add to the examples strictly
+        # following the `_1` and `_2` order, that is,
+        # `sent_1`'s info should go in first and then
+        # followed by `sent_2`'s, otherwise your test
+        # results will be messed up!
+        # For the guid, simply use the row number (0-
+        # indexed) for each data instance, i.e. the index
+        # in a for loop. Use the same guid for statements
+        # coming from the same complementary pair.
+        # Make sure to handle if data do not have
+        # labels field.
         json_path = os.path.join(data_dir, split+".json")
         data = json.load(open(json_path, "r"))
         
@@ -50,12 +72,12 @@ class Com2SenseDataProcessor(DataProcessor):
             sentence_1 = datum["sent_1"]
             sentence_2 = datum["sent_2"]
 
-            if "label_1" in data:
+            if "label_1" in datum:
                 label_1 = self.label2int[datum["label_1"]]
             else:
                 label_1 = None
 
-            if "label_2" in data:
+            if "label_2" in datum:
                 label_2 = self.label2int[datum["label_2"]]
             else:
                 label_2 = None
@@ -82,29 +104,6 @@ class Com2SenseDataProcessor(DataProcessor):
             )
             examples.append(example_1)
             examples.append(example_2)
-
-        ##################################################
-        # TODO: Use json python package to load the data
-        # properly.
-        # We recommend separately storing the two
-        # complementary statements into two individual
-        # `examples` using the provided class
-        # `Coms2SenseSingleSentenceExample` in `utils.py`.
-        # e.g. example_1 = ...
-        #      example_2 = ...
-        #      examples.append(example_1)
-        #      examples.append(example_2)
-        # Make sure to add to the examples strictly
-        # following the `_1` and `_2` order, that is,
-        # `sent_1`'s info should go in first and then
-        # followed by `sent_2`'s, otherwise your test
-        # results will be messed up!
-        # For the guid, simply use the row number (0-
-        # indexed) for each data instance, i.e. the index
-        # in a for loop. Use the same guid for statements
-        # coming from the same complementary pair.
-        # Make sure to handle if data do not have
-        # labels field.
         # End of TODO.
         ##################################################
 
@@ -132,6 +131,5 @@ if __name__ == "__main__":
     test_examples = proc.get_test_examples()
     print()
     for i in range(3):
-        # print(test_examples[i])
-        print(test_examples[i].text)
+        print(test_examples[i])
     print()
