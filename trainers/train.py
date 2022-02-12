@@ -227,11 +227,9 @@ def train(args, train_dataset, model, tokenizer):
             if args.training_phase == "pretrain":
                 # TODO: Mask the input tokens.
                 # call the mask token function perhapsa
-                tokenizer = AutoTokenizer.from_pretrained(args.tokenizer_name)
 
                 inputs, train_output = mask_tokens(inputs["input_ids"], tokenizer, args,
                                        special_tokens_mask=None)
-
                 
 
             # TODO: See the HuggingFace transformers doc to properly get
@@ -248,7 +246,6 @@ def train(args, train_dataset, model, tokenizer):
             optimizer.step()
             scheduler.step()
             
-
             # Loss backward.
             loss.backward()
 
@@ -396,13 +393,12 @@ def evaluate(args, model, tokenizer, prefix="", data_split="test"):
             # TODO: Please finish the following eval loop.
             # Make sure to make a special if-statement for
             # args.training_phase is `pretrain`.
-            eval_output = model(**inputs)  # unpack into keyword args from inputs
+            labels = model(**inputs)  # unpack into keyword args from inputs
 
             if args.training_phase == "pretrain":
                 # TODO: Mask the input tokens.
-                tokenizer = AutoTokenizer.from_pretrained(args.tokenizer_name)
 
-                inputs, eval_output = mask_tokens(inputs["input_ids"], tokenizer, args,
+                inputs, labels = mask_tokens(inputs["input_ids"], tokenizer, args,
                                        special_tokens_mask=None)
 
 
@@ -411,15 +407,13 @@ def evaluate(args, model, tokenizer, prefix="", data_split="test"):
             # indexing properly the outputs as tuples.
             # Make sure to perform a `.mean()` on the eval loss and add it
             # to the `eval_loss` variable.
-            logits = eval_output.logits
-            criterion = torch.nn.NLLLoss()
-            y_label = torch.autograd.Variable(inputs["labels"])
-            eval_loss = criterion(eval_output, y_label)
-
-
+            logits = labels.logits
+        
+            eval_loss += labels.loss.mean()
 
             # TODO: Handles the logits with Softmax properly.
-            logits = np.Softmax(np.numpy([logits]))
+            logits = np.array(logits)
+            logits = np.exp(logits) / np.sum(logits)
 
             # End of TODO.
             ##################################################
@@ -465,16 +459,21 @@ def evaluate(args, model, tokenizer, prefix="", data_split="test"):
         # TODO: For `pretrain` phase, we only need to compute the
         # metric "perplexity", that is the exp of the eval_loss.
         if args.training_phase == "pretrain":
-            raise NotImplementedError("Please finish the TODO!")
+            eval_perplexity = math.exp(eval_loss)
+            
         # TODO: Please use the preds and labels to properly compute all
         # the following metrics: accuracy, precision, recall and F1-score.
         # Please also make your sci-kit learn scores able to take the
         # `args.score_average_method` for the `average` argument.
         else:
-            raise NotImplementedError("Please finish the TODO!")
+            eval_acc = accuracy_score(labels, preds)
+            eval_prec = precision_score(labels,preds, average = args.score_average_method)
+            eval_recall = recall_score(labels,preds, average = args.score_average_method)
+            eval_f1 = f1_score(labels,preds, average = args.score_average_method)
+
             # TODO: Pairwise accuracy.
             if args.task_name == "com2sense":
-                raise NotImplementedError("Please finish the TODO!")
+                eval_pairwise_acc = pairwise_accuracy(guids, preds, labels)
 
         # End of TODO.
         ##################################################
@@ -645,16 +644,16 @@ def main():
     # sequence classification model.
 
     # TODO: Huggingface configs.
-    raise NotImplementedError("Please finish the TODO!")
+    config = AutoConfig.from_pretrained(args.config_name)
 
     # TODO: Tokenizer.
-    raise NotImplementedError("Please finish the TODO!")
+    tokenizer = AutoTokenizer.from_pretrained(args.tokenizer_name)
 
     # TODO: Defines the model.
     if args.training_phase == "pretrain":
-        raise NotImplementedError("Please finish the TODO!")
+        model = AutoModelForMaskedLM.from_pretrained(args.model_name_or_path)
     else:
-        raise NotImplementedError("Please finish the TODO!")
+        model = AutoModelForSequenceClassification.from_pretrained(args.model_name_or_path)
 
     # End of TODO.
     ##################################################
