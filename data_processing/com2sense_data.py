@@ -61,7 +61,49 @@ class Com2SenseDataProcessor(DataProcessor):
         # coming from the same complementary pair.
         # Make sure to handle if data do not have
         # labels field.
-        raise NotImplementedError("Please finish the TODO!")
+        json_path = os.path.join(data_dir, split+".json")
+        data = json.load(open(json_path, "r"))
+        
+        examples = []
+
+        for i in range(len(data)):
+            datum = data[i]
+            guid = i
+            sentence_1 = datum["sent_1"]
+            sentence_2 = datum["sent_2"]
+
+            if "label_1" in datum:
+                label_1 = self.label2int[datum["label_1"]]
+            else:
+                label_1 = None
+
+            if "label_2" in datum:
+                label_2 = self.label2int[datum["label_2"]]
+            else:
+                label_2 = None
+
+            domain = datum["domain"]
+            scenario = datum["scenario"]
+            numeracy = eval(datum["numeracy"])
+
+            example_1 = Coms2SenseSingleSentenceExample(
+                guid=guid,
+                text=sentence_1,
+                label=label_1,
+                domain=domain,
+                scenario=scenario,
+                numeracy=numeracy
+            )
+            example_2 = Coms2SenseSingleSentenceExample(
+                guid=guid,
+                text=sentence_2,
+                label=label_2,
+                domain=domain,
+                scenario=scenario,
+                numeracy=numeracy
+            )
+            examples.append(example_1)
+            examples.append(example_2)
         # End of TODO.
         ##################################################
 
