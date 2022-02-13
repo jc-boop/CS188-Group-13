@@ -44,35 +44,49 @@ def mask_tokens(inputs, tokenizer, args, special_tokens_mask=None):
 
     ##################################################
     # TODO: Please finish this function.
-
+    print(special_tokens_mask)
     # First sample a few tokens in each sequence for the MLM, with probability
     # `args.mlm_probability`.
     # Hint: you may find these functions handy: `torch.full`, Tensor's built-in
     # function `masked_fill_`, and `torch.bernoulli`.
     # Check the inputs to the bernoulli function and use other hinted functions
     # to construct such inputs.
-    raise NotImplementedError("Please finish the TODO!")
+
+    mask = torch.bernoulli(torch.full(inputs.size(), args.mlm_probability))
+    # raise NotImplementedError("Please finish the TODO!")
 
     # Remember that the "non-masked" parts should be filled with ignore index.
-    raise NotImplementedError("Please finish the TODO!")
+
+    # https://stackoverflow.com/questions/56328630/pytorch-masked-fill-why-cant-i-mask-all-zeros
+    labels = labels.masked_fill(mask==0, args.mlm_ignore_index)
+    # raise NotImplementedError("Please finish the TODO!")
 
     # For 80% of the time, we will replace masked input tokens with  the
     # tokenizer.mask_token (e.g. for BERT it is [MASK] for for RoBERTa it is
     # <mask>, check tokenizer documentation for more details)
-    raise NotImplementedError("Please finish the TODO!")
+    token_mask = torch.bernoulli(torch.mul(mask, 0.8))
+    inputs = inputs.masked_fill(token_mask==1, tokenizer.convert_tokens_to_ids(tokenizer.mask_token))
+    # raise NotImplementedError("Please finish the TODO!")
 
     # For 10% of the time, we replace masked input tokens with random word.
     # Hint: you may find function `torch.randint` handy.
     # Hint: make sure that the random word replaced positions are not overlapping
     # with those of the masked positions, i.e. "~indices_replaced".
-    raise NotImplementedError("Please finish the TODO!")
+
+    # 50% of the remaining 20% is 10%
+    rand_mask = torch.bernoulli(torch.mul(torch.sub(mask, token_mask), 0.5))
+    rand_tokens = torch.randint(len(tokenizer), inputs.size())
+    rand_tokens = rand_tokens.masked_fill(rand_mask==0, 0)
+    inputs = inputs.masked_fill(rand_mask==1, 0)
+    inputs = torch.add(inputs, rand_tokens)
+    # raise NotImplementedError("Please finish the TODO!")
 
     # End of TODO
     ##################################################
 
     # For the rest of the time (10% of the time) we will keep the masked input
     # tokens unchanged
-    pass  # Do nothing.
+    # pass  # Do nothing.
 
     return inputs, labels
 
@@ -86,8 +100,19 @@ def pairwise_accuracy(guids, preds, labels):
     # Hint: Utilize the `guid` as the `guid` for each
     # statement coming from the same complementary
     # pair is identical. You can simply pair the these
-    # predictions and labels w.r.t the `guid`. 
-    raise NotImplementedError("Please finish the TODO!")
+    # predictions and labels w.r.t the `guid`.
+    acc_map = {}
+    for i, n in enumerate(guids):
+        if n in acc_map and acc_map[n] == 0.0:
+            continue
+        if preds[i] == labels[i]:
+            acc_map[n] = 1.0
+        else:
+            acc_map[n] = 0.0
+    acc = sum(acc_map.values()) / len(acc_map)
+
+    # raise NotImplementedError("Please finish the TODO!")
+
     # End of TODO
     ########################################################
      
@@ -138,7 +163,7 @@ if __name__ == "__main__":
     # Unit-testing the pairwise accuracy function.
     guids = [0, 0, 1, 1, 2, 2, 3, 3]
     preds = np.asarray([0, 0, 1, 0, 0, 1, 1, 1])
-    labels = np.asarray([1, 0,1, 0, 0, 1, 1, 1])
+    labels = np.asarray([1, 0, 1, 0, 0, 1, 1, 1])
     acc = pairwise_accuracy(guids, preds, labels)
     
     if acc == 0.75:
