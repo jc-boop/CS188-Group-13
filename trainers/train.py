@@ -203,7 +203,7 @@ def train(args, train_dataset, model, tokenizer):
             model.train()
 
             # Processes a batch.
-            batch = tuple(t.to(args.device) for t in batch)
+            batch = tuple(t.to(args.device) for t in batch) # assgin devices
 
             inputs = {"input_ids": batch[0], "attention_mask": batch[1],
                       "labels": batch[3]}
@@ -219,15 +219,23 @@ def train(args, train_dataset, model, tokenizer):
             # TODO: Please finish the following training loop.
             # Make sure to make a special if-statement for
             # args.training_phase is `pretrain`.
-            raise NotImplementedError("Please finish the TODO!")
+
+            # unpack into keyword args from inputs
+            train_output = model(**inputs) # model based on the inputs
+
 
             if args.training_phase == "pretrain":
                 # TODO: Mask the input tokens.
-                raise NotImplementedError("Please finish the TODO!")
+                # call the mask token function perhapsa
+
+                inputs, train_output = mask_tokens(inputs["input_ids"], tokenizer, args,
+                                       special_tokens_mask=None)
+                
 
             # TODO: See the HuggingFace transformers doc to properly get
             # the loss from the model outputs.
-            raise NotImplementedError("Please finish the TODO!")
+            loss = train_output.loss
+
 
             if args.n_gpu > 1:
                 # Applies mean() to average on multi-gpu parallel training.
@@ -235,10 +243,13 @@ def train(args, train_dataset, model, tokenizer):
 
             # Handles the `gradient_accumulation_steps`, i.e., every such
             # steps we update the model, so the loss needs to be devided.
-            raise NotImplementedError("Please finish the TODO!")
-
+            optimizer.step()
+            scheduler.step()
+            
             # Loss backward.
-            raise NotImplementedError("Please finish the TODO!")
+            loss.backward()
+
+            optimizer.zero_grad()    # initialize to zero for gradient
 
             # End of TODO.
             ##################################################
@@ -382,21 +393,26 @@ def evaluate(args, model, tokenizer, prefix="", data_split="test"):
             # TODO: Please finish the following eval loop.
             # Make sure to make a special if-statement for
             # args.training_phase is `pretrain`.
-            raise NotImplementedError("Please finish the TODO!")
+            labels = model(**inputs)  # unpack into keyword args from inputs
 
             if args.training_phase == "pretrain":
                 # TODO: Mask the input tokens.
-                raise NotImplementedError("Please finish the TODO!")
+                inputs, labels = mask_tokens(inputs["input_ids"], tokenizer, args,
+                                       special_tokens_mask=None)
+
 
             # TODO: See the HuggingFace transformers doc to properly get the loss
             # AND the logits from the model outputs, it can simply be 
             # indexing properly the outputs as tuples.
             # Make sure to perform a `.mean()` on the eval loss and add it
             # to the `eval_loss` variable.
-            raise NotImplementedError("Please finish the TODO!")
+            logits = labels.logits
+        
+            eval_loss += labels.loss.mean()
 
             # TODO: Handles the logits with Softmax properly.
-            raise NotImplementedError("Please finish the TODO!")
+            logits = torch.Tensor(logits)
+            logits = torch.exp(logits) / torch.sum(logits)
 
             # End of TODO.
             ##################################################
@@ -410,8 +426,7 @@ def evaluate(args, model, tokenizer, prefix="", data_split="test"):
         else:
             preds = np.append(preds, logits.detach().cpu().numpy(), axis=0)
             if has_label:
-                labels = np.append(labels,
-                    inputs["labels"].detach().cpu().numpy(), axis=0)
+                labels = np.append(labels, inputs["labels"].detach().cpu().numpy(), axis=0)
 
         if args.max_eval_steps > 0 and nb_eval_steps >= args.max_eval_steps:
             logging.info("Early stopping"
@@ -442,16 +457,21 @@ def evaluate(args, model, tokenizer, prefix="", data_split="test"):
         # TODO: For `pretrain` phase, we only need to compute the
         # metric "perplexity", that is the exp of the eval_loss.
         if args.training_phase == "pretrain":
-            raise NotImplementedError("Please finish the TODO!")
+            eval_perplexity = math.exp(eval_loss)
+            
         # TODO: Please use the preds and labels to properly compute all
         # the following metrics: accuracy, precision, recall and F1-score.
         # Please also make your sci-kit learn scores able to take the
         # `args.score_average_method` for the `average` argument.
         else:
-            raise NotImplementedError("Please finish the TODO!")
+            eval_acc = accuracy_score(labels, preds)
+            eval_prec = precision_score(labels,preds, average = args.score_average_method)
+            eval_recall = recall_score(labels,preds, average = args.score_average_method)
+            eval_f1 = f1_score(labels,preds, average = args.score_average_method)
+
             # TODO: Pairwise accuracy.
             if args.task_name == "com2sense":
-                raise NotImplementedError("Please finish the TODO!")
+                eval_pairwise_acc = pairwise_accuracy(guids, preds, labels)
 
         # End of TODO.
         ##################################################
@@ -622,16 +642,16 @@ def main():
     # sequence classification model.
 
     # TODO: Huggingface configs.
-    raise NotImplementedError("Please finish the TODO!")
+    config = AutoConfig.from_pretrained(args.model_name_or_path)
 
     # TODO: Tokenizer.
-    raise NotImplementedError("Please finish the TODO!")
+    tokenizer = AutoTokenizer.from_pretrained(args.model_name_or_path)
 
     # TODO: Defines the model.
     if args.training_phase == "pretrain":
-        raise NotImplementedError("Please finish the TODO!")
+        model = AutoModelForMaskedLM.from_pretrained(args.model_name_or_path)
     else:
-        raise NotImplementedError("Please finish the TODO!")
+        model = AutoModelForSequenceClassification.from_pretrained(args.model_name_or_path)
 
     # End of TODO.
     ##################################################
