@@ -220,22 +220,20 @@ def train(args, train_dataset, model, tokenizer):
             # Make sure to make a special if-statement for
             # args.training_phase is `pretrain`.
 
-            # unpack into keyword args from inputs
-            train_output = model(**inputs) # model based on the inputs
-
-
+ 
             if args.training_phase == "pretrain":
                 # TODO: Mask the input tokens.
                 # call the mask token function perhapsa
 
-                inputs, train_output = mask_tokens(inputs["input_ids"], tokenizer, args,
+                inputs["input_ids"], inputs["labels"] = mask_tokens(inputs["input_ids"], tokenizer, args,
                                        special_tokens_mask=None)
-                
+            
 
             # TODO: See the HuggingFace transformers doc to properly get
             # the loss from the model outputs.
-            loss = train_output.loss
-
+            output = model(**inputs) # model based on the inputs
+            
+            loss = output.loss
 
             if args.n_gpu > 1:
                 # Applies mean() to average on multi-gpu parallel training.
@@ -243,11 +241,12 @@ def train(args, train_dataset, model, tokenizer):
 
             # Handles the `gradient_accumulation_steps`, i.e., every such
             # steps we update the model, so the loss needs to be devided.
-            optimizer.step()
-            scheduler.step()
-            
+             
             # Loss backward.
             loss.backward()
+
+            optimizer.step()
+            scheduler.step()
 
             optimizer.zero_grad()    # initialize to zero for gradient
 
@@ -393,28 +392,32 @@ def evaluate(args, model, tokenizer, prefix="", data_split="test"):
             # TODO: Please finish the following eval loop.
             # Make sure to make a special if-statement for
             # args.training_phase is `pretrain`.
-            labels = model(**inputs)  # unpack into keyword args from inputs
 
             if args.training_phase == "pretrain":
                 # TODO: Mask the input tokens.
 
-                inputs, labels = mask_tokens(inputs["input_ids"], tokenizer, args,
+                inputs["input_ids"], labels = mask_tokens(inputs["input_ids"], tokenizer, args,
                                        special_tokens_mask=None)
+            
+                inputs["labels"] = labels
 
-
+            
+            outputs = model(**inputs)  # unpack into keyword args from inputs
             # TODO: See the HuggingFace transformers doc to properly get the loss
             # AND the logits from the model outputs, it can simply be 
             # indexing properly the outputs as tuples.
             # Make sure to perform a `.mean()` on the eval loss and add it
             # to the `eval_loss` variable.
-            logits = labels.logits
-        
-            eval_loss += labels.loss.mean()
+            logits = outputs.logits
+
+            if (outputs.loss != None):
+                eval_loss += outputs.loss.mean()
 
             # TODO: Handles the logits with Softmax properly.
-            logits = np.array(logits)
-            logits = np.exp(logits) / np.sum(logits)
-
+#            logits = np.array(logits)
+#            logits = np.exp(logits) / np.sum(logits)
+#            logist = torch.from_numpy(logist)
+            logist = torch.nn.functional.softmax(logits, dim = -1)
             # End of TODO.
             ##################################################
 
@@ -643,11 +646,12 @@ def main():
     # `training_phase` is `pretrain` otherwise use the
     # sequence classification model.
 
+
     # TODO: Huggingface configs.
-    config = AutoConfig.from_pretrained(args.config_name)
+    config = AutoConfig.from_pretrained(args.model_name_or_path)
 
     # TODO: Tokenizer.
-    tokenizer = AutoTokenizer.from_pretrained(args.tokenizer_name)
+    tokenizer = AutoTokenizer.from_pretrained(args.model_name_or_path)
 
     # TODO: Defines the model.
     if args.training_phase == "pretrain":
