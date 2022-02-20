@@ -395,12 +395,8 @@ def evaluate(args, model, tokenizer, prefix="", data_split="test"):
 
             if args.training_phase == "pretrain":
                 # TODO: Mask the input tokens.
-<<<<<<< HEAD
-                inputs, labels = mask_tokens(inputs["input_ids"], tokenizer, args,
-=======
 
                 inputs["input_ids"], labels = mask_tokens(inputs["input_ids"], tokenizer, args,
->>>>>>> 58d77adc51c6d3e8ef4b30e75d5ab7fabe247cbf
                                        special_tokens_mask=None)
             
                 inputs["labels"] = labels
@@ -414,14 +410,8 @@ def evaluate(args, model, tokenizer, prefix="", data_split="test"):
             # to the `eval_loss` variable.
             logits = outputs.logits
 
-<<<<<<< HEAD
-            # TODO: Handles the logits with Softmax properly.
-            logits = torch.Tensor(logits)
-            logits = torch.exp(logits) / torch.sum(logits)
-=======
             if (outputs.loss != None):
                 eval_loss += outputs.loss.mean()
->>>>>>> 58d77adc51c6d3e8ef4b30e75d5ab7fabe247cbf
 
             # TODO: Handles the logits with Softmax properly.
 #            logits = np.array(logits)
