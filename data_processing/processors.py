@@ -217,7 +217,6 @@ class Com2SenseDataset(Dataset):
         example = self.examples[idx]
         guid = example.guid
         text = example.text
-        print(idx, example.text)
        
         batch_encoding = self.tokenizer(
             text,
