@@ -1,0 +1,6 @@
+com2sense_F1_score = 0.6655490360435876
+com2sense_accuracy = 0.49874371859296485
+com2sense_loss = tensor(0.6945, device='cuda:0')
+com2sense_pairwise_accuracy = 0.0
+com2sense_precision = 0.49937106918238994
+com2sense_recall = 0.9974874371859297
