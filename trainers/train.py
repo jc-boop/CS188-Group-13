@@ -241,14 +241,10 @@ def train(args, train_dataset, model, tokenizer):
 
             # Handles the `gradient_accumulation_steps`, i.e., every such
             # steps we update the model, so the loss needs to be devided.
-             
+            loss = loss / args.gradient_accumulation_steps
+
             # Loss backward.
             loss.backward()
-
-            optimizer.step()
-            scheduler.step()
-
-            optimizer.zero_grad()    # initialize to zero for gradient
 
             # End of TODO.
             ##################################################
@@ -417,7 +413,7 @@ def evaluate(args, model, tokenizer, prefix="", data_split="test"):
 #            logits = np.array(logits)
 #            logits = np.exp(logits) / np.sum(logits)
 #            logist = torch.from_numpy(logist)
-            logist = torch.nn.functional.softmax(logits, dim = -1)
+            logits = torch.nn.functional.softmax(logits, dim = -1)
             # End of TODO.
             ##################################################
 
