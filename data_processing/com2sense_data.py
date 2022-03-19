@@ -94,7 +94,7 @@ class Com2SenseDataProcessor(DataProcessor):
             scenario = datum["scenario"]
             numeracy = eval(datum["numeracy"])
 
-
+            # ------------------------ Additional Knowledge Augmentation --------------
             # ready to find nouns,verbs,Name entities for each sentence
             nlp_list_1 = nlp(sentence_1)
             nlp_list_2 = nlp(sentence_2)
@@ -163,6 +163,8 @@ class Com2SenseDataProcessor(DataProcessor):
                 if (info2 != None):
                     sentence_2 = sentence_2[0:-1] + info2
 
+            # ----------------End of Additional Knowledge Augmentation --------------
+            
             example_1 = Coms2SenseSingleSentenceExample(
                 guid=guid,
                 text=sentence_1,
