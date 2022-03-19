@@ -7,6 +7,13 @@ import pprint
 import numpy as np
 import random
 import argparse
+import requests
+import nltk
+import spacy
+# for spacy and web dictionary install reqs
+# pip install -U spacy
+# python -m spacy download en_core_web_sm
+
 from tqdm import tqdm
 from .utils import DataProcessor
 from .utils import Coms2SenseSingleSentenceExample
@@ -14,6 +21,7 @@ from transformers import (
     AutoTokenizer,
 )
 
+nlp = spacy.load("en_core_web_sm")
 
 class Com2SenseDataProcessor(DataProcessor):
     """Processor for Com2Sense Dataset.
@@ -86,6 +94,75 @@ class Com2SenseDataProcessor(DataProcessor):
             scenario = datum["scenario"]
             numeracy = eval(datum["numeracy"])
 
+
+            # ready to find nouns,verbs,Name entities for each sentence
+            nlp_list_1 = nlp(sentence_1)
+            nlp_list_2 = nlp(sentence_2)
+
+            new_sent_1 = ""
+            new_sent_2 = ""
+
+            # named entities list
+            list_ent1 = []
+            list_ent2 = []
+
+            # nouns list
+            list_noun1 = []
+            list_noun2 = []
+            
+            # check the named entities
+            for ent1 in nlp_list_1.ents:
+                list_ent1.append(ent1.text)
+            
+            for ent2 in nlp_list_2.ents:
+                list_ent2.append(ent2.text)
+
+            # augment additional knowledge if true label ie: 1
+            if (label_1 == 1):
+                for token1 in nlp_list_1:
+                    # potential tag list approach
+                    if (token1.pos_ == 'ADJ' or token1.pos_ == 'ADP' or \
+                        token1.pos_ == 'PART' or token1.pos_ == 'NOUN' or \
+                        token1.pos_ == 'NUM' or  token1.pos_ == 'AUX' or \
+                        token1.pos_ == 'ADV' or token1.pos_ == 'CONJ' or  \
+                        token1.pos_ == 'CCONJ' or \
+                        token1.pos_ == 'VERB' or token1.text in list_ent1):
+
+                        # add unique nouns
+                        if (token1.pos_ == 'NOUN'):
+
+                            if token1.text.lower() not in list_noun1:
+                                list_noun1.append(token1.text.lower())
+
+
+                # embedding the additional knowledge 
+                info1 = get_additional_knowledge(list_noun1)
+
+                if (info1 != None):
+                    sentence_1 = sentence_1[0:-1] + info1
+
+
+            if (label_2 == 1):
+                for token2 in nlp_list_2:
+                    # store the part('s, not), noun and verb
+                    if (token2.pos_ == 'ADJ' or token2.pos_ == 'ADP' or \
+                        token2.pos_ == 'PART' or token2.pos_ == 'NOUN' or \
+                        token2.pos_ == 'NUM' or token2.pos_ == 'AUX' or  \
+                        token2.pos_ == 'ADV' or token2.pos_ == 'CONJ' or  \
+                        token2.pos_ == 'CCONJ' or \
+                        token2.pos_ == 'VERB' or token2.text in list_ent1):
+
+                        if (token2.pos_ == 'NOUN'):
+
+                            if token2.text.lower() not in list_noun2:
+                                list_noun2.append(token2.text.lower())
+
+                # embedding the additional knowledge
+                info2 = get_additional_knowledge(list_noun2)
+
+                if (info2 != None):
+                    sentence_2 = sentence_2[0:-1] + info2
+
             example_1 = Coms2SenseSingleSentenceExample(
                 guid=guid,
                 text=sentence_1,
@@ -104,6 +181,11 @@ class Com2SenseDataProcessor(DataProcessor):
             )
             examples.append(example_1)
             examples.append(example_2)
+
+            # loop through the tokens inside the list and find
+
+            # embedding ConceptNet knowedge
+            
         # End of TODO.
         ##################################################
 
@@ -122,6 +204,58 @@ class Com2SenseDataProcessor(DataProcessor):
         return self._read_data(data_dir=data_dir, split="test")
 
 
+def get_additional_knowledge(word_list):
+
+    # augment additional knowledge from conceptNet
+
+    addi_info1 = ", where "
+
+    len_list = len(word_list)
+
+    if (len_list > 0):
+
+        if (len_list > 2):
+            len_list = 2
+
+        for i in range(0,len_list):
+
+            # check whether request succeed or not
+            try:
+                cn = requests.get('http://api.conceptnet.io/c/en/' + word_list[i], timeout=5)
+            except requests.exceptions.Timeout as e:  # This is the correct syntax
+                return None
+            
+            cn = cn.json()
+
+            len_edges = len(cn['edges'])
+
+            for index in range(0, len_edges):
+
+                string1 = cn['edges'][index]['surfaceText'] 
+
+                # check for null values and language mode
+                if string1 != None and cn['edges'][index]["start"]["language"] == "en" and \
+                    cn['edges'][index]["end"]["language"] == "en":
+
+                    string1= str(string1)
+
+                    string1 = string1.replace("[", "")
+                    string1 = string1.replace("*", "")
+                    string1 = string1.replace(".", "")
+                    string1 = string1.replace("]", "").lower()
+
+                    
+                    addi_info1 = addi_info1 + string1 + ", "
+                    
+                    # only add one edge from each noun
+                    break
+
+        addi_info1 = addi_info1[0:-2] + ".\n"
+
+        return addi_info1
+
+    else: 
+        return None
 if __name__ == "__main__":
 
     # Test loading data.
@@ -133,3 +267,6 @@ if __name__ == "__main__":
     for i in range(3):
         print(test_examples[i])
     print()
+
+
+
