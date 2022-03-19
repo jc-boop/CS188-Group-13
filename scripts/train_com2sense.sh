@@ -1,3 +1,4 @@
+#!/usr/bin/env bash
 TASK_NAME="com2sense"
 DATA_DIR="datasets/com2sense"
 MODEL_TYPE="bert-base-cased"
@@ -12,8 +13,8 @@ python3 -m trainers.train \
   --per_gpu_train_batch_size 4 \
   --per_gpu_eval_batch_size 1 \
   --learning_rate 1e-5 \
-  --num_train_epochs 100.0 \
-  --max_seq_length 128 \
+  --num_train_epochs 5 \
+  --max_seq_length 256 \
   --output_dir "${TASK_NAME}/ckpts" \
   --task_name "${TASK_NAME}" \
   --data_dir "${DATA_DIR}" \
@@ -26,4 +27,4 @@ python3 -m trainers.train \
   --iters_to_eval 20 40 \
   --overwrite_output_dir \
   --eval_split "dev" \
-  # --max_eval_steps 1000 \
+  --max_eval_steps 5580 \
